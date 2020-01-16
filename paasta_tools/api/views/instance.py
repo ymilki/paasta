@@ -68,8 +68,6 @@ from paasta_tools.mesos_tools import get_tasks_from_app_id
 from paasta_tools.mesos_tools import results_or_unknown
 from paasta_tools.mesos_tools import select_tasks_by_id
 from paasta_tools.mesos_tools import TaskNotFound
-from paasta_tools.smartstack_tools import get_backends
-from paasta_tools.smartstack_tools import match_backends_and_tasks
 from paasta_tools.utils import calculate_tail_lines
 from paasta_tools.utils import NoConfigurationForServiceError
 from paasta_tools.utils import NoDockerImageError
@@ -342,7 +340,7 @@ def _build_smartstack_location_dict_for_backends(
     should_return_individual_backends: bool,
 ) -> MutableMapping[str, Any]:
     sorted_smartstack_backends = sorted(
-        get_backends(
+        smartstack_tools.get_backends(
             registration,
             synapse_host=synapse_host,
             synapse_port=settings.system_paasta_config.get_synapse_port(),
@@ -351,7 +349,7 @@ def _build_smartstack_location_dict_for_backends(
         key=lambda backend: backend["status"],
         reverse=True,  # put 'UP' backends above 'MAINT' backends
     )
-    matched_smartstack_backends_and_tasks = match_backends_and_tasks(
+    matched_smartstack_backends_and_tasks = smartstack_tools.match_backends_and_tasks(
         sorted_smartstack_backends, tasks
     )
     return smartstack_tools.build_smartstack_location_dict(
