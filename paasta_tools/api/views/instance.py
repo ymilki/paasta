@@ -670,6 +670,7 @@ def instance_status(request):
                     instance=instance,
                     verbose=verbose,
                     include_smartstack=include_smartstack,
+                    include_envoy=include_envoy,
                     instance_type=instance_type,
                     settings=settings,
                 )

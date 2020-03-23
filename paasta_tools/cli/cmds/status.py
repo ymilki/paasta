@@ -1158,6 +1158,16 @@ def print_kubernetes_status(
             kubernetes_status.smartstack.locations,
         )
         output.extend([f"    {line}" for line in smartstack_status_human])
+
+    # TODO(): k8s status envoy
+    # if kubernetes_status.envoy is not None:
+    #    envoy_status_human = get_envoy_status_human(
+    #        marathon_status.envoy.registration,
+    #        marathon_status.envoy.expected_backends_per_location,
+    #        marathon_status.envoy.locations,
+    #    )
+    #    output.extend([f"    {line}" for line in envoy_status_human])
+
     return 0
 
 

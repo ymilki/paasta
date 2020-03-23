@@ -130,7 +130,6 @@ from paasta_tools.utils import SystemPaastaConfig
 from paasta_tools.utils import time_cache
 from paasta_tools.utils import VolumeWithMode
 
-
 log = logging.getLogger(__name__)
 
 KUBE_CONFIG_PATH = "/etc/kubernetes/admin.conf"
@@ -335,6 +334,7 @@ class KubeClient:
         self.apiextensions = kube_client.ApiextensionsV1beta1Api()
         self.custom = kube_client.CustomObjectsApi()
         self.autoscaling = kube_client.AutoscalingV2beta1Api()
+        kube_client.rest.logger.setLevel(logging.WARNING)
 
 
 class KubernetesDeploymentConfig(LongRunningServiceConfig):

@@ -208,6 +208,67 @@ def smartstack_status(
     return smartstack_status
 
 
+# TODO(): Match paasta_tools/api/views/instance.py marathon_service_mesh_status
+def envoy_status(
+    service: str,
+    instance: str,
+    job_config: LongRunningServiceConfig,
+    service_namespace_config: ServiceNamespaceConfig,
+    pods: Sequence[V1Pod],
+    settings: Any,
+    should_return_individual_backends: bool = False,
+) -> Mapping[str, Any]:
+
+    registration = job_config.get_registrations()[0]
+    instance_pool = job_config.get_pool()
+
+    smartstack_replication_checker = KubeSmartstackReplicationChecker(
+        nodes=kubernetes_tools.get_all_nodes(settings.kubernetes_client),
+        system_paasta_config=settings.system_paasta_config,
+    )
+    node_hostname_by_location = smartstack_replication_checker.get_allowed_locations_and_hosts(
+        job_config
+    )
+
+    expected_smartstack_count = marathon_tools.get_expected_instance_count_for_namespace(
+        service=service,
+        namespace=instance,
+        cluster=settings.cluster,
+        instance_type_class=KubernetesDeploymentConfig,
+    )
+    expected_count_per_location = int(
+        expected_smartstack_count / len(node_hostname_by_location)
+    )
+    smartstack_status: MutableMapping[str, Any] = {
+        "registration": registration,
+        "expected_backends_per_location": expected_count_per_location,
+        "locations": [],
+    }
+
+    for location, hosts in node_hostname_by_location.items():
+        synapse_host = smartstack_replication_checker.get_first_host_in_pool(
+            hosts, instance_pool
+        )
+        sorted_backends = sorted(
+            smartstack_tools.get_backends(
+                registration,
+                synapse_host=synapse_host,
+                synapse_port=settings.system_paasta_config.get_synapse_port(),
+                synapse_haproxy_url_format=settings.system_paasta_config.get_synapse_haproxy_url_format(),
+            ),
+            key=lambda backend: backend["status"],
+            reverse=True,  # put 'UP' backends above 'MAINT' backends
+        )
+
+        matched_backends_and_pods = match_backends_and_pods(sorted_backends, pods)
+        location_dict = smartstack_tools.build_smartstack_location_dict(
+            location, matched_backends_and_pods, should_return_individual_backends
+        )
+        smartstack_status["locations"].append(location_dict)
+
+    return smartstack_status
+
+
 def cr_status(
     service: str, instance: str, verbose: int, instance_type: str, kube_client: Any,
 ) -> Mapping[str, Any]:
@@ -232,6 +293,7 @@ def kubernetes_status(
     instance: str,
     verbose: int,
     include_smartstack: bool,
+    include_envoy: bool,
     instance_type: str,
     settings: Any,
 ) -> Mapping[str, Any]:
@@ -290,22 +352,33 @@ def kubernetes_status(
             evicted_count += 1
     kstatus["evicted_count"] = evicted_count
 
-    if include_smartstack:
+    if include_smartstack or include_envoy:
         service_namespace_config = kubernetes_tools.load_service_namespace_config(
             service=job_config.get_service_name_smartstack(),
             namespace=job_config.get_nerve_namespace(),
             soa_dir=settings.soa_dir,
         )
         if "proxy_port" in service_namespace_config:
-            kstatus["smartstack"] = smartstack_status(
-                service=job_config.get_service_name_smartstack(),
-                instance=job_config.get_nerve_namespace(),
-                job_config=job_config,
-                service_namespace_config=service_namespace_config,
-                pods=pod_list,
-                should_return_individual_backends=verbose > 0,
-                settings=settings,
-            )
+            if include_smartstack:
+                kstatus["smartstack"] = smartstack_status(
+                    service=job_config.get_service_name_smartstack(),
+                    instance=job_config.get_nerve_namespace(),
+                    job_config=job_config,
+                    service_namespace_config=service_namespace_config,
+                    pods=pod_list,
+                    should_return_individual_backends=verbose > 0,
+                    settings=settings,
+                )
+            if include_envoy:
+                kstatus["envoy"] = envoy_status(
+                    service=job_config.get_service_name_smartstack(),
+                    instance=job_config.get_nerve_namespace(),
+                    job_config=job_config,
+                    service_namespace_config=service_namespace_config,
+                    pods=pod_list,
+                    should_return_individual_backends=verbose > 0,
+                    settings=settings,
+                )
     return kstatus
 
 
@@ -314,6 +387,7 @@ def instance_status(
     instance: str,
     verbose: int,
     include_smartstack: bool,
+    include_envoy: bool,
     instance_type: str,
     settings: Any,
 ) -> Mapping[str, Any]:
@@ -341,6 +415,7 @@ def instance_status(
             instance_type=instance_type,
             verbose=verbose,
             include_smartstack=include_smartstack,
+            include_envoy=include_envoy,
             settings=settings,
         )
 
