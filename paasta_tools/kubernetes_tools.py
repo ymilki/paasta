@@ -636,6 +636,7 @@ class KubernetesDeploymentConfig(LongRunningServiceConfig):
 
     def get_sidecar_containers(
         self,
+        docker_volumes: Sequence[DockerVolume],
         system_paasta_config: SystemPaastaConfig,
         service_namespace_config: ServiceNamespaceConfig,
     ) -> Sequence[V1Container]:
@@ -681,6 +682,11 @@ class KubernetesDeploymentConfig(LongRunningServiceConfig):
                     name=HACHECK_POD_NAME,
                     env=self.get_kubernetes_environment(),
                     ports=[V1ContainerPort(container_port=6666)],
+                    volume_mounts=self.get_volume_mounts(
+                        docker_volumes=docker_volumes,
+                        aws_ebs_volumes=[],
+                        persistent_volumes=[],
+                    ),
                     readiness_probe=readiness_probe,
                 )
             )
@@ -865,6 +871,7 @@ class KubernetesDeploymentConfig(LongRunningServiceConfig):
             ),
         )
         containers = [service_container] + self.get_sidecar_containers(  # type: ignore
+            docker_volumes=docker_volumes,
             system_paasta_config=system_paasta_config,
             service_namespace_config=service_namespace_config,
         )

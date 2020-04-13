@@ -360,9 +360,14 @@ class TestKubernetesDeploymentConfig:
                 is_in_smartstack=mock.Mock(return_value=False)
             )
 
+            mock_docker_volumes = [
+                {"hostPath": "/nail/blah", "containerPath": "/nail/foo"},
+                {"hostPath": "/nail/thing", "containerPath": "/nail/bar"},
+            ]
+
             assert (
                 self.deployment.get_sidecar_containers(
-                    mock_system_config, mock_service_namespace
+                    mock_docker_volumes, mock_system_config, mock_service_namespace
                 )
                 == []
             )
@@ -372,7 +377,7 @@ class TestKubernetesDeploymentConfig:
             )
 
             ret = self.deployment.get_sidecar_containers(
-                mock_system_config, mock_service_namespace
+                mock_docker_volumes, mock_system_config, mock_service_namespace
             )
             expected = [
                 V1Container(
@@ -403,6 +408,14 @@ class TestKubernetesDeploymentConfig:
                     ),
                     name="hacheck",
                     ports=[V1ContainerPort(container_port=6666)],
+                    volume_mounts=[
+                        V1VolumeMount(
+                            mount_path="/nail/foo", name="sane-name", read_only=True
+                        ),
+                        V1VolumeMount(
+                            mount_path="/nail/bar", name="sane-name", read_only=True
+                        ),
+                    ],
                 )
             ]
             assert ret == expected
@@ -416,7 +429,7 @@ class TestKubernetesDeploymentConfig:
                 ),
             )
             ret = self.deployment.get_sidecar_containers(
-                mock_system_config, mock_service_namespace
+                mock_docker_volumes, mock_system_config, mock_service_namespace
             )
             expected = [
                 V1Container(
@@ -454,6 +467,14 @@ class TestKubernetesDeploymentConfig:
                         initial_delay_seconds=10,
                         period_seconds=10,
                     ),
+                    volume_mounts=[
+                        V1VolumeMount(
+                            mount_path="/nail/foo", name="sane-name", read_only=True
+                        ),
+                        V1VolumeMount(
+                            mount_path="/nail/bar", name="sane-name", read_only=True
+                        ),
+                    ],
                 )
             ]
             assert ret == expected
