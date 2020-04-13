@@ -1797,7 +1797,6 @@ class SystemPaastaConfigDict(TypedDict, total=False):
     mesos_config: Dict
     metrics_provider: str
     monitoring_config: Dict
-    nerve_readiness_check_script: str
     readiness_check_script: str
     paasta_native: PaastaNativeConfig
     pdb_max_unavailable: Union[str, int]
@@ -2291,12 +2290,6 @@ class SystemPaastaConfig:
     def get_register_native_services(self) -> bool:
         """Enable registration of native paasta services in nerve"""
         return self.config_dict.get("register_native_services", False)
-
-    def get_nerve_readiness_check_script(self) -> str:
-        """Script to check service is up in smartstack"""
-        return self.config_dict.get(
-            "nerve_readiness_check_script", "/check_smartstack_up.sh"
-        )
 
     def get_readiness_check_script(self) -> str:
         """Script to check readiness in proxy services"""

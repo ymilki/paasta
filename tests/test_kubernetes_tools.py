@@ -347,11 +347,13 @@ class TestKubernetesDeploymentConfig:
             "paasta_tools.kubernetes_tools.KubernetesDeploymentConfig.get_enable_nerve_readiness_check",
             autospec=True,
             return_value=False,
-        ) as mock_get_enable_nerve_readiness_check:
+        ) as mock_get_enable_nerve_readiness_check, mock.patch(
+            "paasta_tools.kubernetes_tools.KubernetesDeploymentConfig.get_enable_envoy_readiness_check",
+            autospec=True,
+            return_value=False,
+        ) as mock_get_enable_envoy_readiness_check:
             mock_system_config = mock.Mock(
-                get_nerve_readiness_check_script=mock.Mock(
-                    return_value="/nail/blah.sh"
-                ),
+                get_readiness_check_script=mock.Mock(return_value="/nail/blah.sh"),
                 get_hacheck_sidecar_image_url=mock.Mock(
                     return_value="some-docker-image"
                 ),
@@ -419,11 +421,11 @@ class TestKubernetesDeploymentConfig:
                 )
             ]
             assert ret == expected
+
             mock_get_enable_nerve_readiness_check.return_value = True
+            mock_get_enable_envoy_readiness_check.return_value = False
             mock_system_config = mock.Mock(
-                get_nerve_readiness_check_script=mock.Mock(
-                    return_value="/nail/blah.sh"
-                ),
+                get_readiness_check_script=mock.Mock(return_value="/nail/blah.sh"),
                 get_hacheck_sidecar_image_url=mock.Mock(
                     return_value="some-docker-image"
                 ),
@@ -462,7 +464,141 @@ class TestKubernetesDeploymentConfig:
                     ports=[V1ContainerPort(container_port=6666)],
                     readiness_probe=V1Probe(
                         _exec=V1ExecAction(
-                            command=["/nail/blah.sh", "8888", "universal.credit"]
+                            command=[
+                                "/nail/blah.sh",
+                                "--enable-smartstack",
+                                "8888",
+                                "universal.credit",
+                            ]
+                        ),
+                        initial_delay_seconds=10,
+                        period_seconds=10,
+                    ),
+                    volume_mounts=[
+                        V1VolumeMount(
+                            mount_path="/nail/foo", name="sane-name", read_only=True
+                        ),
+                        V1VolumeMount(
+                            mount_path="/nail/bar", name="sane-name", read_only=True
+                        ),
+                    ],
+                )
+            ]
+            assert ret == expected
+
+            mock_get_enable_nerve_readiness_check.return_value = False
+            mock_get_enable_envoy_readiness_check.return_value = True
+            mock_system_config = mock.Mock(
+                get_readiness_check_script=mock.Mock(return_value="/nail/blah.sh"),
+                get_hacheck_sidecar_image_url=mock.Mock(
+                    return_value="some-docker-image"
+                ),
+            )
+            ret = self.deployment.get_sidecar_containers(
+                mock_docker_volumes, mock_system_config, mock_service_namespace
+            )
+            expected = [
+                V1Container(
+                    env={},
+                    image="some-docker-image",
+                    lifecycle=V1Lifecycle(
+                        pre_stop=V1Handler(
+                            _exec=V1ExecAction(
+                                command=[
+                                    "/bin/sh",
+                                    "-c",
+                                    "/usr/bin/hadown " "universal.credit; sleep " "31",
+                                ]
+                            )
+                        )
+                    ),
+                    name="hacheck",
+                    resources=V1ResourceRequirements(
+                        limits={
+                            "cpu": 0.1,
+                            "memory": "1024Mi",
+                            "ephemeral-storage": "256Mi",
+                        },
+                        requests={
+                            "cpu": 0.1,
+                            "memory": "1024Mi",
+                            "ephemeral-storage": "256Mi",
+                        },
+                    ),
+                    ports=[V1ContainerPort(container_port=6666)],
+                    readiness_probe=V1Probe(
+                        _exec=V1ExecAction(
+                            command=[
+                                "/nail/blah.sh",
+                                "--enable-envoy",
+                                "8888",
+                                "universal.credit",
+                            ]
+                        ),
+                        initial_delay_seconds=10,
+                        period_seconds=10,
+                    ),
+                    volume_mounts=[
+                        V1VolumeMount(
+                            mount_path="/nail/foo", name="sane-name", read_only=True
+                        ),
+                        V1VolumeMount(
+                            mount_path="/nail/bar", name="sane-name", read_only=True
+                        ),
+                    ],
+                )
+            ]
+            assert ret == expected
+
+            mock_get_enable_nerve_readiness_check.return_value = True
+            mock_get_enable_envoy_readiness_check.return_value = True
+            mock_system_config = mock.Mock(
+                get_readiness_check_script=mock.Mock(return_value="/nail/blah.sh"),
+                get_hacheck_sidecar_image_url=mock.Mock(
+                    return_value="some-docker-image"
+                ),
+            )
+            ret = self.deployment.get_sidecar_containers(
+                mock_docker_volumes, mock_system_config, mock_service_namespace
+            )
+            expected = [
+                V1Container(
+                    env={},
+                    image="some-docker-image",
+                    lifecycle=V1Lifecycle(
+                        pre_stop=V1Handler(
+                            _exec=V1ExecAction(
+                                command=[
+                                    "/bin/sh",
+                                    "-c",
+                                    "/usr/bin/hadown " "universal.credit; sleep " "31",
+                                ]
+                            )
+                        )
+                    ),
+                    name="hacheck",
+                    resources=V1ResourceRequirements(
+                        limits={
+                            "cpu": 0.1,
+                            "memory": "1024Mi",
+                            "ephemeral-storage": "256Mi",
+                        },
+                        requests={
+                            "cpu": 0.1,
+                            "memory": "1024Mi",
+                            "ephemeral-storage": "256Mi",
+                        },
+                    ),
+                    ports=[V1ContainerPort(container_port=6666)],
+                    readiness_probe=V1Probe(
+                        _exec=V1ExecAction(
+                            command=[
+                                "/nail/blah.sh",
+                                "--enable-smartstack",
+                                "--enable-envoy",
+                                "8888",
+                                "universal.credit",
+                            ]
                         ),
                         initial_delay_seconds=10,
                         period_seconds=10,

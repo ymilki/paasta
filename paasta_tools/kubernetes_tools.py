@@ -644,16 +644,19 @@ class KubernetesDeploymentConfig(LongRunningServiceConfig):
         # s_m_j currently asserts that services are healthy in smartstack before
         # continuing a bounce. this readiness check lets us achieve the same thing
         readiness_probe: Optional[V1Probe]
-        if (
-            self.get_enable_nerve_readiness_check()
-            and service_namespace_config.is_in_smartstack()
-        ):
+
+        enabled_checks = []
+        if self.get_enable_nerve_readiness_check():
+            enabled_checks.append("--enable-smartstack")
+        if self.get_enable_envoy_readiness_check():
+            enabled_checks.append("--enable-envoy")
+
+        if service_namespace_config.is_in_smartstack() and enabled_checks:
             readiness_probe = V1Probe(
                 _exec=V1ExecAction(
-                    command=[
-                        system_paasta_config.get_nerve_readiness_check_script(),
-                        str(self.get_container_port()),
-                    ]
+                    command=[system_paasta_config.get_readiness_check_script()]
+                    + enabled_checks
+                    + [str(self.get_container_port())]
                     + self.get_registrations()
                 ),
                 initial_delay_seconds=10,
