@@ -154,6 +154,8 @@ Valid options are:
   before we consider it healthy. Useful if tasks take a while to start up.
 * ``check_haproxy``: Whether to check the local haproxy to make sure this task
   has been registered and discovered.
+* ``check_envoy``: Whether to check the local envoy to make sure this task
+  has been registered and discovered.
 
 Understanding How ``bounce_margin_factor`` Affects Bouncing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

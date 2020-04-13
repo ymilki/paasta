@@ -287,6 +287,9 @@ instance MAY have:
       haproxy to make sure this task has been registered and discovered
       (Defaults to ``True`` if service is in SmartStack)
 
+    * ``check_envoy``: Boolean indicating if PaaSTA should check envoy to make
+      sure this task has been registered and discovered. (Defaults to ``False``)
+
     * ``min_task_uptime``: Minimum number of seconds that a task must be
       running before we consider it healthy (Disabled by default)
 
