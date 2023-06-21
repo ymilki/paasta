@@ -197,7 +197,8 @@
                                 "uwsgi",
                                 "cpu",
                                 "piscina",
-                                "arbitrary_promql"
+                                "arbitrary_promql",
+                                "gunicorn"
                             ]
                         },
                         "decision_policy": {
@@ -285,7 +286,8 @@
                                                 "uwsgi",
                                                 "cpu",
                                                 "piscina",
-                                                "if metrics_provider is arbitrary_promql, the prometheus_adapter_config parameter is required"
+                                                "if metrics_provider is arbitrary_promql, the prometheus_adapter_config parameter is required",
+                                                "gunicorn"
                                             ]
                                         }
                                     }
