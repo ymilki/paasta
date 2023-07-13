@@ -1,3 +1,24 @@
+paasta-tools (0.185.0) xenial; urgency=medium
+
+  * 0.185.0 tagged with 'make release'
+    Commit: Merge pull request #3637 from ymilki/gunicorn_metrics  I am
+    adding autoscaling support for gunicorn services to paasta -
+    allowing for existing uwsgi paasta services to switch to gunicorn.
+    This is a multi-part process:  - [x] Add `metrics_provider:
+    gunicorn` to config validation (#3630 ) - [x] Add new statsd-
+    exporter sidecar (named gunicorn_exporter-sidecar) (#3629) - []
+    Duplicate uwsgi logic for gunicorn (this PR)  ## In this PR
+    Duplicate uwsgi logic for gunicorn  * Update utilities and tools *
+    Add scaling rule * Add gunicorn sidecar when requested * Label pod
+    appropriately  ### Notes  I"ve duplicated most of uwsgi logic for
+    gunicorn.  Changes from uwsgi: * Dropped support for `offset` since
+    that option is deprecated * Assume prometheus will always be used.
+    ## Testing  I"ve validated this branch in our staging environment
+    with a gunicorn service. I was able to see the service scale up and
+    down in response to changes in worker utilization.
+
+ -- Jonathan Chu <jrchu@yelp.com>  Thu, 13 Jul 2023 09:48:35 -0700
+
 paasta-tools (0.184.0) xenial; urgency=medium
 
   * 0.184.0 tagged with 'make release'
