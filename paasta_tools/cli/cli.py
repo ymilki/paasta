@@ -122,6 +122,7 @@ PAASTA_SUBCOMMANDS = {
     "rollback": "rollback",
     "secret": "secret",
     "security-check": "security_check",
+    "show-metric-providers": "show_metric_providers",
     "spark-run": "spark_run",
     "start": "start_stop_restart",
     "stop": "start_stop_restart",
