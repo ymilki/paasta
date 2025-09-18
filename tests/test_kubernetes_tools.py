@@ -1805,6 +1805,8 @@ class TestKubernetesDeploymentConfig:
         )
         mock_system_paasta_config.get_topology_spread_constraints.return_value = []
         mock_system_paasta_config.get_pod_defaults.return_value = dict(dns_policy="foo")
+        mock_load_system_paasta_config.return_value = mock_system_paasta_config
+        mock_system_paasta_config.get_service_auth_token_volume_config.return_value = {}
         mock_get_termination_grace_period.return_value = termination_grace_period
 
         if autoscaling_metric_provider:
